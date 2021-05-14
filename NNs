@@ -1,0 +1,35 @@
+from numpy import* 
+import os
+import struct
+
+class Nn:
+    lout=[]
+    connections=[]
+
+    def __init__(self,lst):
+        self.nlst=lst
+        self.ln=len(lst)
+        for i in range(self.ln):
+            self.lout.append(ones(lst[i]+1))
+        for i in range(self.ln-1):
+            self.connections.append(exp(-5)*random.random((lst[i]+1,lst[i+1])))
+    
+    def _sigmoid(self,num):
+        return 1/(1+exp(-num))
+
+    def work(self,datain):
+        self.lout[0][:self.nlst[0]]=datain
+        for i in range(self.ln-1):
+            self.lout[i+1][:self.nlst[i+1]]=dot(self.lout[i],self.connections[i])
+            for j in range(self.nlst[i+1]):
+                self.lout[i+1][j]=self._sigmoid(self.lout[i+1][j])
+    
+    def train(self,datain,label,lr):
+        self.work(datain)
+        label=append(label,1)
+        delta=self.lout[-1]*(ones(self.nlst[-1]+1)-self.lout[-1])*(label-self.lout[-1])
+        for i in range(2,self.ln+1):
+            nextDelta=delta
+            nextDelta=delete(nextDelta,[-1])
+            delta=self.lout[-i]*(ones(self.nlst[-i]+1)-self.lout[-i])*dot(nextDelta,self.connections[-i+1].T)
+            self.connections[-i+1]+=lr*outer(self.lout[-i],nextDelta)
